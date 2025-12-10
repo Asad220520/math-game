@@ -1,7 +1,7 @@
-// 📂 script.js
+// 📂 script.js (Финальная исправленная версия)
 
 // =================================================================
-// 1. ИМПОРТЫ FIREBASE (Импорт из firebase-init.js)
+// 1. ИМПОРТЫ FIREBASE
 // =================================================================
 import {
   db,
@@ -39,7 +39,7 @@ const elements = {
   gameRoot: document.getElementById("game-root"),
 };
 
-// Аудио (убедитесь, что MP3 файлы существуют)
+// Аудио
 const correctSounds = [
   document.getElementById("sound-correct-1"),
   document.getElementById("sound-correct-2"),
@@ -63,8 +63,32 @@ function playSound(isCorrect) {
 }
 
 // =================================================================
-// 3. ЛОББИ И УПРАВЛЕНИЕ ИГРОЙ
+// 3. ЛОББИ, УПРАВЛЕНИЕ ИГРОЙ И LOCAL STORAGE
 // =================================================================
+
+// Сохранение сессии в Local Storage
+function saveSession(code, team) {
+  localStorage.setItem("mathBattleGameId", code);
+  localStorage.setItem("mathBattleMyTeam", team);
+}
+
+// Загрузка сессии из Local Storage
+function loadSession() {
+  const code = localStorage.getItem("mathBattleGameId");
+  const team = localStorage.getItem("mathBattleMyTeam");
+  if (code && team) {
+    currentGameId = code;
+    myTeam = team;
+
+    // Скрываем лобби, но показываем gameRoot только после получения данных
+    elements.lobbyOverlay.classList.remove("show");
+    elements.lobbyStatus.innerText = `Загрузка активной игры: ${code} (${team})...`;
+
+    listenToGame(code);
+    return true;
+  }
+  return false;
+}
 
 function generateGameCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -92,6 +116,9 @@ async function createGame() {
 
   try {
     await setDoc(doc(gamesCollection, code), initialState);
+
+    saveSession(code, myTeam);
+
     elements.lobbyStatus.innerText = `Игра создана. Код: ${code}. Ожидаем соперника...`;
 
     listenToGame(code);
@@ -128,6 +155,8 @@ async function joinGame() {
       status: "playing",
     });
 
+    saveSession(code, myTeam);
+
     listenToGame(code);
   } catch (error) {
     console.error("Ошибка при присоединении: ", error);
@@ -160,6 +189,8 @@ function listenToGame(code) {
 }
 
 function updateGameUI(gameState) {
+  if (!myTeam) return; // Игнорируем обновления, если сессия не установлена
+
   if (gameState.status === "waiting") {
     elements.lobbyOverlay.classList.add("show");
     elements.gameRoot.style.display = "none";
@@ -194,25 +225,31 @@ function updateGameUI(gameState) {
     const opponentPlayerData =
       opponentTeam === "red" ? gameState.playerRed : gameState.playerBlue;
 
-    // Настройка порядка зон и заголовков
+    // >>> УПРАВЛЕНИЕ НАМПАДОМ И ПОРЯДКОМ ЗОН <<<
+    const numpadBlue = document.getElementById("numpad-blue");
+    const numpadRed = document.getElementById("numpad-red");
+    const zoneBlue = document.querySelector(".player-zone.blue");
+    const zoneRed = document.querySelector(".player-zone.red");
+
     if (myTeam === "red") {
       document.getElementById("team-name-blue").innerText = `СОПЕРНИК (СИНИЕ)`;
       document.getElementById("team-name-red").innerText = `ВЫ (КРАСНЫЕ)`;
 
-      document.querySelector(".player-zone.blue").style.order = 1;
-      document.querySelector(".player-zone.red").style.order = 0;
+      zoneBlue.style.order = 0;
+      zoneRed.style.order = 1;
 
-      document.getElementById("numpad-blue").style.pointerEvents = "none";
-      document.getElementById("numpad-red").style.pointerEvents = "auto";
+      numpadBlue.style.display = "none";
+      numpadRed.style.display = "grid"; // Активный нампад для ВАС (Red)
     } else {
+      // myTeam === 'blue'
       document.getElementById("team-name-blue").innerText = `ВЫ (СИНИЕ)`;
       document.getElementById("team-name-red").innerText = `СОПЕРНИК (КРАСНЫЕ)`;
 
-      document.querySelector(".player-zone.blue").style.order = 0;
-      document.querySelector(".player-zone.red").style.order = 1;
+      zoneBlue.style.order = 1;
+      zoneRed.style.order = 0;
 
-      document.getElementById("numpad-blue").style.pointerEvents = "auto";
-      document.getElementById("numpad-red").style.pointerEvents = "none";
+      numpadBlue.style.display = "grid"; // Активный нампад для ВАС (Blue)
+      numpadRed.style.display = "none";
     }
 
     // Обновляем ввод
@@ -269,7 +306,7 @@ async function handleTimeOut() {
 
   try {
     const gameDoc = await getDoc(gameRef);
-    if (!gameDoc.exists) return;
+    if (!gameDoc.exists || gameDoc.data().status !== "playing") return;
     const gameState = gameDoc.data();
 
     const now = Date.now();
@@ -296,10 +333,10 @@ async function handleTimeOut() {
 function updateProgressBar(currentScore) {
   const fill = elements.progressFill;
 
-  let fillWidth = (currentScore / 100) * 100;
-  let redPercent = 100 - fillWidth;
+  let fillWidth = Math.min(Math.max(currentScore, 0), 100); // Ограничиваем от 0 до 100
   let bluePercent = fillWidth;
 
+  // Яркий градиент
   fill.style.background = `linear-gradient(90deg, var(--blue) 0%, var(--blue) ${bluePercent}%, var(--red) ${bluePercent}%, var(--red) 100%)`;
   fill.style.width = fillWidth + "%";
 }
@@ -347,7 +384,7 @@ async function updateOpponentInput() {
 
 async function submitAnswer(team) {
   if (team !== myTeam || !currentGameId) return;
-  if (localInput === "") return;
+  if (localInput === "") return; // Если пусто, игнорируем нажатие
 
   const playerAnswer = parseInt(localInput);
   const gameRef = doc(gamesCollection, currentGameId);
@@ -357,8 +394,12 @@ async function submitAnswer(team) {
 
   try {
     const gameDoc = await getDoc(gameRef);
-    if (!gameDoc.exists || gameState.status !== "playing") return;
+
+    if (!gameDoc.exists) return;
     const gameState = gameDoc.data();
+
+    if (gameState.status !== "playing") return;
+
     const max = gameState.maxNumber;
 
     let isCorrect = false;
@@ -378,15 +419,15 @@ async function submitAnswer(team) {
       newPoints++;
 
       if (myTeam === "blue") {
-        newScore += 10;
+        newScore = Math.min(newScore + 10, 100); // Ограничение счета
       } else {
-        newScore -= 10;
+        newScore = Math.max(newScore - 10, 0); // Ограничение счета
       }
 
       newProblem = generateMathProblem(max);
     } else {
       playSound(false);
-      newScore -= 5;
+      newScore = Math.max(Math.min(newScore - 5, 100), 0); // Ограничение счета
       newProblem = currentProblemState;
     }
 
@@ -414,13 +455,14 @@ async function submitAnswer(team) {
     startTimer(Date.now());
   } catch (error) {
     console.error("Ошибка при отправке ответа: ", error);
+    showFeedback(myTeam, false);
   } finally {
-    btn.disabled = false;
+    btn.disabled = false; // ГАРАНТИРОВАННО РАЗБЛОКИРУЕМ
   }
 }
 
 // =================================================================
-// 6. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ЭКСПОРТ
+// 6. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ИНИЦИАЛИЗАЦИЯ
 // =================================================================
 
 function generateMathProblem(max) {
@@ -448,15 +490,15 @@ function showFeedback(team, isCorrect) {
   const display = document.getElementById(`answer-${team}`);
 
   if (isCorrect) {
-    display.style.borderColor = "rgba(100, 255, 100, 0.5)";
-    display.style.filter = "drop-shadow(0 0 5px rgba(0, 255, 0, 0.8))";
+    display.style.borderColor = "var(--blue)";
+    display.style.filter = "drop-shadow(0 0 8px var(--blue))";
   } else {
-    display.style.borderColor = "rgba(255, 100, 100, 0.5)";
-    display.style.filter = "drop-shadow(0 0 5px rgba(255, 0, 0, 0.8))";
+    display.style.borderColor = "var(--red)";
+    display.style.filter = "drop-shadow(0 0 8px var(--red))";
   }
 
   setTimeout(() => {
-    display.style.borderColor = "rgba(255,255,255,0.1)";
+    display.style.borderColor = "var(--glass-border)";
     display.style.filter = "none";
   }, 500);
 }
@@ -481,18 +523,31 @@ function resetToLobby() {
   clearInterval(timerInterval);
   timerInterval = null;
 
+  // Очистка Local Storage
+  localStorage.removeItem("mathBattleGameId");
+  localStorage.removeItem("mathBattleMyTeam");
+
   elements.modalOverlay.classList.remove("show");
   elements.gameRoot.style.display = "none";
   elements.lobbyOverlay.classList.add("show");
   elements.gameCodeInput.value = "";
   elements.lobbyStatus.innerText = "Ожидание...";
 
-  document.querySelector(".player-zone.blue").style.order = 0;
-  document.querySelector(".player-zone.red").style.order = 1;
+  // Сброс порядка зон
+  document.querySelector(".player-zone.blue").style.order = 1;
+  document.querySelector(".player-zone.red").style.order = 0;
   document.getElementById("team-name-blue").innerText = `ВЫ (СИНИЕ)`;
 }
 
-// Делаем функции доступными для HTML через глобальный объект window.game
+// --- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ---
+function initialize() {
+  if (!loadSession()) {
+    elements.lobbyOverlay.classList.add("show");
+  }
+}
+initialize();
+
+// Делаем функции доступными для HTML
 window.game = {
   createGame,
   joinGame,

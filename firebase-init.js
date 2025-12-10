@@ -11,7 +11,7 @@ import {
   onSnapshot,
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-// Ваша конфигурация Firebase (с вашими ключами)
+// !!! ЗАМЕНИТЕ ЭТО СВОЕЙ КОНФИГУРАЦИЕЙ !!!
 const firebaseConfig = {
   apiKey: "AIzaSyAIQ6T04uz9ZzK435d3NSVIKfoFfbgRDow",
   authDomain: "games-563b9.firebaseapp.com",
@@ -24,6 +24,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Экспортируем все необходимые функции и объект базы данных
+// Экспорт для использования в script.js
 export const db = getFirestore(app);
 export { collection, doc, setDoc, getDoc, updateDoc, onSnapshot };

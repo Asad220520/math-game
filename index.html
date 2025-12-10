@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <div id="lobby-overlay" class="modal-overlay show">
+    <div id="lobby-overlay" class="modal-overlay">
         <div class="modal-card">
             <h1>Math Battle Pro</h1>
             <p class="muted">Введите код игры или создайте новую.</p>
@@ -44,40 +44,14 @@
             <div class="timer" id="timer-display">Время: 15</div>
         </div>
 
-        <div class="player-zone blue">
-            <div class="panel">
-                <h2 class="team-name" id="team-name-blue">ВЫ (СИНИЕ)</h2>
-                <div class="score" id="score-blue">Очки: 0</div>
-                <div class="problem" id="problem-blue">? + ?</div>
-                
-                <div class="answer" id="answer-blue">...</div>
-                
-                <div class="numpad" id="numpad-blue">
-                    <button onclick="window.game.addNumber('blue', 1)">1</button>
-                    <button onclick="window.game.addNumber('blue', 2)">2</button>
-                    <button onclick="window.game.addNumber('blue', 3)">3</button>
-                    <button onclick="window.game.addNumber('blue', 4)">4</button>
-                    <button onclick="window.game.addNumber('blue', 5)">5</button>
-                    <button onclick="window.game.addNumber('blue', 6)">6</button>
-                    <button onclick="window.game.addNumber('blue', 7)">7</button>
-                    <button onclick="window.game.addNumber('blue', 8)">8</button>
-                    <button onclick="window.game.addNumber('blue', 9)">9</button>
-                    <button onclick="window.game.clearInput('blue')" class="btn-clear">C</button>
-                    <button onclick="window.game.addNumber('blue', 0)">0</button>
-                    <button onclick="window.game.submitAnswer('blue')" class="btn-enter">OK</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="player-zone red">
+        <div class="player-zone red" style="order: 0;">
             <div class="panel">
                 <h2 class="team-name" id="team-name-red">СОПЕРНИК (КРАСНЫЕ)</h2>
                 <div class="score" id="score-red">Очки: 0</div>
                 <div class="problem" id="problem-red">? + ?</div>
-                
                 <div class="answer" id="answer-red">...</div>
                 
-                <div class="numpad" id="numpad-red">
+                <div class="numpad" id="numpad-red" style="display: none;">
                     <button onclick="window.game.addNumber('red', 1)">1</button>
                     <button onclick="window.game.addNumber('red', 2)">2</button>
                     <button onclick="window.game.addNumber('red', 3)">3</button>
@@ -94,6 +68,30 @@
             </div>
         </div>
 
+        <div class="player-zone blue" style="order: 1;">
+            <div class="panel">
+                <h2 class="team-name" id="team-name-blue">ВЫ (СИНИЕ)</h2>
+                <div class="score" id="score-blue">Очки: 0</div>
+                <div class="problem" id="problem-blue">? + ?</div>
+                <div class="answer" id="answer-blue">...</div>
+                
+                <div class="numpad" id="numpad-blue" style="display: none;">
+                    <button onclick="window.game.addNumber('blue', 1)">1</button>
+                    <button onclick="window.game.addNumber('blue', 2)">2</button>
+                    <button onclick="window.game.addNumber('blue', 3)">3</button>
+                    <button onclick="window.game.addNumber('blue', 4)">4</button>
+                    <button onclick="window.game.addNumber('blue', 5)">5</button>
+                    <button onclick="window.game.addNumber('blue', 6)">6</button>
+                    <button onclick="window.game.addNumber('blue', 7)">7</button>
+                    <button onclick="window.game.addNumber('blue', 8)">8</button>
+                    <button onclick="window.game.addNumber('blue', 9)">9</button>
+                    <button onclick="window.game.clearInput('blue')" class="btn-clear">C</button>
+                    <button onclick="window.game.addNumber('blue', 0)">0</button>
+                    <button onclick="window.game.submitAnswer('blue')" class="btn-enter">OK</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <audio id="sound-correct-1" src="correct_1.mp3"></audio>
@@ -104,7 +102,6 @@
     <audio id="sound-error-3" src="error_3.mp3"></audio>
 
     <script type="module" src="firebase-init.js"></script>
-
     <script type="module" src="script.js"></script>
 </body>
 </html>

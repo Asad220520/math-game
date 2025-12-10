@@ -1,24 +1,19 @@
 :root{
-  /* ЯРКИЕ, ЧИСТЫЕ ЦВЕТА */
-  --bg: #1a1a2e; 
-  --card: #20203a; 
-  --glass: rgba(255,255,255,0.08); 
+  /* Яркие, контрастные цвета */
+  --bg: #0f0f1c; 
+  --card: #18182b; 
+  --glass: rgba(255,255,255,0.1); 
   --muted: #b0b0c6;
   
-  --blue: #4c7cff; 
-  --blue-deep: #2a5cff; 
-  --red: #ff4c4c; 
-  --red-deep: #cc3c3c; 
+  --blue: #00bfff; /* ЯРКИЙ СИНИЙ */
+  --blue-deep: #0099cc; 
+  --red: #ff3333; /* ЯРКИЙ КРАСНЫЙ */
+  --red-deep: #cc0000; 
   
-  --blue-deep-rgb: 42, 92, 255; /* Для rgba() */
-  --red-deep-rgb: 204, 60, 60; /* Для rgba() */
-  
-  --neon-glow: none; 
-  --glass-border: rgba(255,255,255,0.1); 
-  --glass-strong: rgba(255,255,255,0.12);
-  --accent: rgba(76, 124, 255, 0.2);
+  --glass-border: rgba(255,255,255,0.15); 
+  --glass-strong: rgba(255,255,255,0.2);
   --radius: 12px;
-  font-family: "Segoe UI", Roboto, Inter, system-ui, -apple-system, "Helvetica Neue", Arial;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial;
 }
 
 /* Reset */
@@ -27,7 +22,7 @@ html,body{height:100%}
 body{
   margin:0;
   background: var(--bg);
-  color:#e6eef8;
+  color:#f0f8ff; /* Чистый белый */
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   overflow:hidden;
@@ -35,348 +30,154 @@ body{
 
 /* MODALS */
 .modal-overlay{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,0,0,0.8);
-  z-index:1000;
-  padding:20px;
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.9); z-index:1000; padding:20px;
 }
 .modal-overlay.show{display:flex}
 .modal-card{
-  width:100%;
-  max-width:420px;
-  background: var(--card);
-  border-radius:16px;
-  padding:22px;
-  text-align:center;
-  border:1px solid var(--glass-border);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  width:100%; max-width:420px; background: var(--card); border-radius:16px;
+  padding:25px; text-align:center; border:2px solid var(--glass-border); 
+  box-shadow: 0 4px 25px rgba(0,0,0,0.7);
 }
-.modal-card h1{margin:0 0 6px;font-size:1.6rem}
-.modal-card .muted{color:var(--muted); margin:6px 0 14px}
-.modal-actions{display:flex;gap:10px;justify-content:center;margin-top:14px}
-
-/* СТИЛИ ДЛЯ ПОЛЯ ВВОДА В ЛОББИ */
+.modal-card h1{margin:0 0 8px;font-size:1.8rem; color: #fff;}
+.modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px}
 .modal-card input[type="text"] {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid var(--glass-border);
-    background: var(--glass);
-    color: #fff;
-    width: 100%;
-    margin-bottom: 15px;
-    text-align: center;
-    font-size: 1.2rem;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-    outline: none;
+    padding: 14px; border-radius: 10px; border: 1px solid var(--blue); 
+    background: rgba(0,0,0,0.3); color: #fff; width: 100%; margin-bottom: 20px;
+    text-align: center; font-size: 1.4rem; outline: none;
 }
 
 /* Buttons */
 .btn{
-  padding:10px 16px;
-  border-radius:8px;
-  border:1px solid transparent;
-  background:var(--glass);
-  color:var(--muted);
-  font-weight:600;
-  cursor:pointer;
-  min-width:96px;
-  transition: transform 0.1s;
+  padding:12px 20px; border-radius:10px; border:1px solid transparent;
+  font-weight:700; cursor:pointer; min-width:120px; transition: all 0.2s;
 }
-.btn:hover{ transform: translateY(-1px); }
-.btn.primary{ background: linear-gradient(90deg,var(--blue-deep),var(--blue)); color:#fff; box-shadow: 0 4px 10px rgba(76, 124, 255, 0.2);}
-.btn.secondary{ background: linear-gradient(90deg,#4cc7ff,#7ccfff); color:#fff; box-shadow: 0 4px 10px rgba(76, 207, 255, 0.2);}
-.btn.danger{ background: linear-gradient(90deg,var(--red-deep),var(--red)); color:#fff; box-shadow:0 4px 10px rgba(255,76,76,0.2);}
-.btn.ghost{ background: transparent; color:var(--muted); border:1px solid var(--glass-border) }
+.btn:hover:not(:disabled){ transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.btn.primary{ background: var(--blue); color:#fff; }
+.btn.secondary{ background: var(--red); color:#fff; }
 
 /* LAYOUT */
 .game-root{
-  height:100vh;
-  width:100%;
-  display:flex;
-  gap:0;
-  align-items:stretch;
-  justify-content:stretch;
-  position:relative;
+  height:100vh; width:100%; display:flex; gap:0; align-items:stretch;
+  justify-content:stretch; position:relative;
 }
 
 /* HUD - progress and timer */
 .hud{
-  position:absolute;
-  left:50%;
-  top:6%;
-  transform:translateX(-50%);
-  width:min(880px,92%);
-  z-index:80;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:16px;
-  pointer-events:none;
+  position:absolute; left:50%; top:6%; transform:translateX(-50%);
+  width:min(900px,94%); z-index:80; display:flex; align-items:center;
+  justify-content:center; gap:20px; pointer-events:none;
 }
 .progress-wrap{
-  position:relative;
-  width:70%;
-  max-width:720px;
-  height:30px; 
-  border-radius:999px;
-  background:var(--card);
-  border:1px solid var(--glass-border);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  overflow:hidden;
-  pointer-events:auto;
+  position:relative; width:70%; max-width:720px; height:35px; 
+  border-radius:999px; background:#404058; 
+  border:2px solid var(--glass-border); 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5); overflow:hidden;
 }
 .progress-fill{
-  width:50%;
-  height:100%;
-  border-radius:999px;
-  background: linear-gradient(90deg, var(--blue), var(--red));
-  box-shadow: none;
+  width:50%; height:100%; border-radius:999px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); 
   transition:width 420ms cubic-bezier(.2,.9,.25,1.15);
-  position:relative;
-}
-.progress-fill::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(90deg, rgba(255,255,255,0.05), transparent 30%, rgba(255,255,255,0.05));
-  mix-blend-mode:overlay;
 }
 .vs-badge{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  background:var(--bg);
-  color: #fff;
-  padding:6px 10px; 
-  border-radius:999px;
-  border:1px solid var(--glass-border);
-  font-weight:700;
-  font-size:0.85rem;
-  pointer-events:none;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  background:var(--bg); color: #fff; padding:8px 12px; border-radius:999px;
+  border:2px solid var(--glass-border); font-weight:800; font-size:1rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.6);
 }
 
-/* timer */
 .timer{
-  min-width:100px; 
-  padding:6px 10px;
-  border-radius:8px;
-  background:var(--card);
-  border:1px solid var(--glass-border);
-  color:#fff;
-  font-weight:700;
-  text-align:center;
-  pointer-events:none;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  min-width:110px; padding:8px 12px; border-radius:10px; background:var(--card);
+  border:2px solid var(--glass-border); color:#fff; font-weight:800; text-align:center;
+  font-size: 1.1rem;
 }
 .timer.time-low{
-  animation: pulse 900ms ease-in-out infinite;
-  color: var(--red);
-  border-color: var(--red-deep);
+  animation: pulse 700ms ease-in-out infinite; color: var(--red);
+  border-color: var(--red); 
 }
 @keyframes pulse{
-  0% { transform: scale(1) translateY(0) }
-  50% { transform: scale(1.03) translateY(-1px) }
+  0% { transform: scale(1) translateY(0) } 50% { transform: scale(1.05) translateY(-1px) }
   100% { transform: scale(1) translateY(0) }
 }
 
 /* PLAYER ZONES */
 .player-zone{
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:30px 12px;
-  transition:all 240ms ease;
-  min-width:260px;
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding:30px 12px; min-width:260px;
 }
 .panel{
-  width:100%;
-  max-width:420px;
-  background: var(--card);
-  border-radius:14px;
-  padding:16px;
-  text-align:center;
-  border:1px solid var(--glass-border);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+  width:100%; max-width:440px; background: var(--card); border-radius:16px;
+  padding:20px; text-align:center; border:2px solid var(--glass-border);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5); 
 }
-.player-zone.blue{ background: linear-gradient(180deg, rgba(42, 92, 255, 0.05), rgba(42, 92, 255, 0.01)); }
-.player-zone.red{ background: linear-gradient(180deg, rgba(204, 60, 60, 0.05), rgba(204, 60, 60, 0.01)); }
-
 
 /* Team header */
-.team-name{ color:var(--muted); font-size:0.9rem; letter-spacing:1.5px; margin:0 0 8px }
-.score{ font-weight:700; font-size:1rem; color:#fff; margin-bottom:12px; background: var(--glass); padding:6px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05)}
+.team-name{ color:var(--muted); font-size:1rem; letter-spacing:2px; margin:0 0 10px }
+.score{ font-weight:800; font-size:1.1rem; color:#fff; margin-bottom:15px; background: var(--glass); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05)}
 
 /* Problem and answer */
 .problem{
-  font-size:2.2rem; 
-  font-weight:800;
-  letter-spacing:0;
-  margin:10px 0;
-  color:#fff;
-  text-shadow: none;
+  font-size:2.8rem; 
+  font-weight:900; margin:12px 0; color:#fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 .answer{
-  margin-bottom:16px;
-  padding:10px 16px;
-  min-width:160px;
-  border-radius:10px;
-  font-size:1.5rem;
-  background: var(--glass);
-  border:1px solid var(--glass-border);
+  margin-bottom:20px; padding:12px 20px; min-width:180px; border-radius:12px;
+  font-size:1.8rem; 
+  font-weight: 700;
+  background: rgba(0,0,0,0.4);
+  border:2px solid var(--glass-border);
   transition: border-color 0.1s, filter 0.1s; 
 }
 
 /* NUMPAD */
 .numpad{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:8px; 
-  margin-top:6px;
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:10px;
   align-items:stretch;
 }
 .numpad button{
-  border-radius:8px;
-  padding:10px 0;
-  font-size:1.2rem;
-  font-weight:700;
-  border:1px solid var(--glass-border);
-  background: var(--glass);
-  color:#fff;
-  cursor:pointer;
-  transition: transform 100ms ease, background 100ms ease;
-  box-shadow: none;
+  border-radius:10px; padding:12px 0; font-size:1.4rem; font-weight:800;
+  border:1px solid var(--glass-border); background: var(--glass); color:#fff;
+  cursor:pointer; transition: transform 100ms ease, background 100ms ease;
 }
-.numpad button:hover { background: var(--glass-strong); }
-.numpad button:active{ transform:translateY(1px) scale(0.99) }
+.numpad button:disabled { opacity: 0.1; cursor: default; }
+.numpad button:hover:not(:disabled) { background: var(--glass-strong); }
+.numpad button:active:not(:disabled){ transform:translateY(1px) scale(0.99) }
 
 /* special */
-.numpad .btn-clear{ 
-    color:var(--red); 
-    background: rgba(255, 76, 76, 0.1); 
-    border:1px solid rgba(255, 76, 76, 0.2);
-}
-.numpad .btn-enter{ 
-    color:var(--bg); 
-    background: linear-gradient(90deg, #fff, #e0e0e0); 
-    font-weight:800 
-}
+.numpad .btn-clear{ color:var(--red); background: rgba(255, 51, 51, 0.1); border:1px solid var(--red-deep);}
+.numpad .btn-enter{ color:var(--bg); background: var(--blue); font-weight:800 }
 
-/* Team accent glow */
-.player-zone.blue .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-.player-zone.red .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-
-/* RESPONSIVE / MOBILE OPTIMIZATION */
-
-/* На широких экранах (Десктоп) */
-@media (min-width: 901px) {
-  .player-zone.red .numpad {
-    /* Скрываем нампад соперника на десктопе, если он не нужен для ввода */
-    display: grid !important; /* переопределяем 'none' из мобильного блока, если он был */
-    pointer-events: none; /* Блокируем ввод для соперника */
-    opacity: 0.2; /* Делаем его менее заметным */
-  }
-}
-
-/* Планшеты и большие телефоны (горизонтальная ориентация) */
-@media (max-width: 900px){
-  .hud{ top:4%; width:94% }
-  .progress-wrap{ width:60% }
-}
-
-/* Телефоны (вертикальная ориентация) */
+/* MOBILE OPTIMIZATION */
 @media (max-width: 720px){
-  .game-root{ 
-    flex-direction:column; 
-    overflow:auto;
-  }
-  .hud{ 
-    position:fixed; 
-    top:8px; 
-    left:50%; 
-    transform:translateX(-50%); 
-    width:94%; 
-    z-index:90; 
-    pointer-events:none 
-  }
+  body { overflow-y: auto; }
+  .game-root{ flex-direction:column; }
   
-  /* Зоны игроков, чтобы поместились по вертикали */
+  .hud{ 
+    position:sticky; top:0; left:0; transform:none; width:100%; padding: 10px 12px;
+  }
+  .progress-wrap{ width:80%; height:28px; } 
+  .vs-badge{ padding: 6px 10px; font-size: 0.9rem; }
+  .timer{ min-width:70px; font-size:1rem; padding: 6px 10px; }
+  
   .player-zone{ 
-    padding:10px 12px; /* Уменьшаем вертикальный паддинг */
-    min-height:30vh; /* Минимальная высота зоны соперника */
+    padding:8px 10px; min-height:30vh; 
+    align-items:flex-start;
   }
   .panel{ 
-    padding:12px;
-    max-width: 480px;
-    margin-top: 50px; /* Учитываем фиксированный HUD */
+    padding:15px;
   }
   
-  /* Соперник (верхняя зона) - делаем меньше */
-  .player-zone.red .panel, 
-  .player-zone.blue .panel {
-    /* Сжимаем обе панели, чтобы уместить две в экран */
-    max-width: 90vw;
-  }
-
-  /* Прогресс и таймер */
-  .progress-wrap{ width:78%; height:26px; } 
-  .vs-badge{ padding: 4px 8px; font-size: 0.8rem; }
-  .timer{ min-width:80px; font-size:0.9rem }
-  .timer.time-low{ animation: pulse 700ms ease-in-out infinite; }
-
-  /* Проблема и ответ */
-  .problem{ font-size:1.8rem; margin:8px 0; }
-  .answer{ font-size:1.2rem; min-width:120px; padding:8px 14px; }
+  .problem{ font-size:2.2rem; margin:6px 0; }
+  .answer{ font-size:1.4rem; padding:10px 16px; }
   
-  /* Скрываем нампад соперника */
-  .player-zone.red .numpad,
-  .player-zone.blue .numpad {
-      /* Клавиатура отображается только для активного игрока (см. script.js) */
-  }
-  
-  /* Уменьшаем нампад */
-  .numpad{ 
-    gap: 6px;
-    /* Ограничиваем максимальную ширину нампада для более компактного вида на маленьких экранах */
-    max-width: 280px; 
-    margin: 8px auto 0;
-  }
-  .numpad button{ 
-    padding:8px 0; 
-    font-size:1.1rem;
-    height: 48px; /* Фиксированная высота для лучшего вида */
-  }
-}
-
-/* Ультра-маленькие экраны (iPhone 5/SE, старые Android) */
-@media (max-width: 500px) {
-  .player-zone{ 
-    min-height:28vh;
-    padding: 8px 10px; 
-  }
-  .problem{ 
-    font-size:1.6rem; 
-  }
-  .answer{ 
-    font-size:1.1rem; 
-    min-width:100px;
-  }
   .numpad{
-    max-width: 240px;
-    gap: 5px;
+    max-width: 280px;
+    margin: 6px auto 0;
+    gap: 8px;
   }
   .numpad button{
-    height: 44px;
-    font-size: 1rem;
+    height: 50px;
+    font-size: 1.2rem;
   }
 }
-
-
-/* small niceties */
-.muted{ color:var(--muted); font-size:0.9rem }
