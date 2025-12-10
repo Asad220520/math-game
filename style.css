@@ -1,0 +1,290 @@
+:root{
+  /* ЯРКИЕ, ЧИСТЫЕ ЦВЕТА */
+  --bg: #1a1a2e; /* Более светлый, аккуратный темный фон */
+  --card: #20203a; /* Фон для панелей */
+  --glass: rgba(255,255,255,0.08); /* Чуть более заметный фон для кнопок */
+  --muted: #b0b0c6;
+  
+  --blue: #4c7cff; /* Яркий, чистый синий */
+  --blue-deep: #2a5cff; /* Насыщенный синий для градиентов */
+  --red: #ff4c4c; /* Яркий, чистый красный */
+  --red-deep: #cc3c3c; /* Насыщенный красный для градиентов */
+  
+  /* УДАЛЕНЫ НЕОНОВЫЕ ТЕНИ И ГЛУБОКИЙ ГРАДИЕНТ */
+  --neon-glow: none; 
+  --glass-border: rgba(255,255,255,0.1); 
+  --glass-strong: rgba(255,255,255,0.12);
+  --accent: rgba(76, 124, 255, 0.2);
+  --radius: 12px; /* Чуть меньше радиус */
+  font-family: "Segoe UI", Roboto, Inter, system-ui, -apple-system, "Helvetica Neue", Arial;
+}
+
+/* Reset */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  /* УПРОЩЕННЫЙ ФОН */
+  background: var(--bg);
+  color:#e6eef8;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow:hidden;
+}
+
+/* MODALS */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.8);
+  z-index:1000;
+  padding:20px;
+}
+.modal-overlay.show{display:flex}
+.modal-card{
+  width:100%;
+  max-width:420px;
+  /* ЧИСТЫЙ ФОН МОДАЛЬНОГО ОКНА */
+  background: var(--card);
+  border-radius:16px;
+  padding:22px;
+  text-align:center;
+  border:1px solid var(--glass-border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+.modal-card h1{margin:0 0 6px;font-size:1.6rem}
+.modal-card .muted{color:var(--muted); margin:6px 0 14px}
+.modal-actions{display:flex;gap:10px;justify-content:center;margin-top:14px}
+
+/* Buttons */
+.btn{
+  padding:10px 16px;
+  border-radius:8px;
+  border:1px solid transparent;
+  background:var(--glass);
+  color:var(--muted);
+  font-weight:600;
+  cursor:pointer;
+  min-width:96px;
+  transition: transform 0.1s;
+}
+.btn:hover{ transform: translateY(-1px); }
+.btn.primary{ background: linear-gradient(90deg,var(--blue-deep),var(--blue)); color:#fff; box-shadow: 0 4px 10px rgba(76, 124, 255, 0.2);}
+.btn.secondary{ background: linear-gradient(90deg,#4cc7ff,#7ccfff); color:#fff; box-shadow: 0 4px 10px rgba(76, 207, 255, 0.2);}
+.btn.danger{ background: linear-gradient(90deg,var(--red-deep),var(--red)); color:#fff; box-shadow:0 4px 10px rgba(255,76,76,0.2);}
+.btn.ghost{ background: transparent; color:var(--muted); border:1px solid var(--glass-border) }
+
+/* LAYOUT */
+.game-root{
+  height:100vh;
+  width:100%;
+  display:flex;
+  gap:0;
+  align-items:stretch;
+  justify-content:stretch;
+  position:relative;
+}
+
+/* HUD - progress and timer */
+.hud{
+  position:absolute;
+  left:50%;
+  top:6%;
+  transform:translateX(-50%);
+  width:min(880px,92%);
+  z-index:80;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  pointer-events:none;
+}
+.progress-wrap{
+  position:relative;
+  width:70%;
+  max-width:720px;
+  height:30px; /* Немного уменьшенная высота */
+  border-radius:999px;
+  background:var(--card);
+  border:1px solid var(--glass-border);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  overflow:hidden;
+  pointer-events:auto;
+}
+.progress-fill{
+  width:50%;
+  height:100%;
+  border-radius:999px;
+  /* УДАЛЕНЫ ТЕНИ, ОСТАВЛЕНЫ ЧИСТЫЕ ГРАДИЕНТЫ ДЛЯ СИНИЙ/КРАСНЫЙ */
+  background: linear-gradient(90deg, var(--blue), var(--red));
+  box-shadow: none;
+  transition:width 420ms cubic-bezier(.2,.9,.25,1.15);
+  position:relative;
+}
+.progress-fill::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  /* Упрощенный блик */
+  background:linear-gradient(90deg, rgba(255,255,255,0.05), transparent 30%, rgba(255,255,255,0.05));
+  mix-blend-mode:overlay;
+}
+.vs-badge{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  background:var(--bg);
+  color: #fff;
+  padding:6px 10px; /* Уменьшен padding */
+  border-radius:999px;
+  border:1px solid var(--glass-border);
+  font-weight:700;
+  font-size:0.85rem;
+  pointer-events:none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+/* timer */
+.timer{
+  min-width:100px; /* Уменьшен размер */
+  padding:6px 10px;
+  border-radius:8px;
+  background:var(--card);
+  border:1px solid var(--glass-border);
+  color:#fff;
+  font-weight:700;
+  text-align:center;
+  pointer-events:none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+.timer.time-low{
+  animation: pulse 900ms ease-in-out infinite;
+  color: var(--red);
+  border-color: var(--red-deep);
+}
+@keyframes pulse{
+  0% { transform: scale(1) translateY(0) }
+  50% { transform: scale(1.03) translateY(-1px) }
+  100% { transform: scale(1) translateY(0) }
+}
+
+/* PLAYER ZONES */
+.player-zone{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:30px 12px;
+  transition:all 240ms ease;
+  min-width:260px;
+}
+.panel{
+  width:100%;
+  max-width:420px;
+  /* ЧИСТЫЙ ФОН ПАНЕЛЕЙ */
+  background: var(--card);
+  border-radius:14px;
+  padding:16px;
+  text-align:center;
+  border:1px solid var(--glass-border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Уменьшенная тень */
+}
+/* ЧИСТЫЙ ФОН ЗОН */
+.player-zone.blue{ background: linear-gradient(180deg, rgba(var(--blue-deep-rgb),0.05), rgba(var(--blue-deep-rgb),0.01)); }
+.player-zone.red{ background: linear-gradient(180deg, rgba(var(--red-deep-rgb),0.05), rgba(var(--red-deep-rgb),0.01)); }
+/* Переменные для RGB, чтобы использовать прозрачность. Добавим их в :root для ясности. */
+:root {
+    /* ... (остальные переменные) */
+    --blue-deep-rgb: 42, 92, 255; /* RGB для #2a5cff */
+    --red-deep-rgb: 204, 60, 60; /* RGB для #cc3c3c */
+}
+
+
+/* Team header */
+.team-name{ color:var(--muted); font-size:0.9rem; letter-spacing:1.5px; margin:0 0 8px }
+.score{ font-weight:700; font-size:1rem; color:#fff; margin-bottom:12px; background: var(--glass); padding:6px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05)}
+
+/* Problem and answer */
+.problem{
+  font-size:2.2rem; /* Немного меньше */
+  font-weight:800;
+  letter-spacing:0;
+  margin:10px 0;
+  color:#fff;
+  text-shadow: none;
+}
+.answer{
+  margin-bottom:16px;
+  padding:10px 16px;
+  min-width:160px;
+  border-radius:10px;
+  font-size:1.5rem;
+  background: var(--glass);
+  border:1px solid var(--glass-border);
+  transition: border-color 0.1s, filter 0.1s; /* для JS анимации */
+}
+
+/* NUMPAD */
+.numpad{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8px; /* Уменьшен зазор */
+  margin-top:6px;
+  align-items:stretch;
+}
+.numpad button{
+  border-radius:8px;
+  padding:10px 0;
+  font-size:1.2rem;
+  font-weight:700;
+  border:1px solid var(--glass-border);
+  background: var(--glass);
+  color:#fff;
+  cursor:pointer;
+  transition: transform 100ms ease, background 100ms ease;
+  box-shadow: none;
+}
+.numpad button:hover { background: var(--glass-strong); }
+.numpad button:active{ transform:translateY(1px) scale(0.99) }
+
+/* special */
+.numpad .btn-clear{ 
+    color:var(--red); 
+    background: rgba(255, 76, 76, 0.1); 
+    border:1px solid rgba(255, 76, 76, 0.2);
+}
+.numpad .btn-enter{ 
+    color:var(--bg); 
+    background: linear-gradient(90deg, #fff, #e0e0e0); 
+    font-weight:800 
+}
+
+/* Team accent glow - УДАЛЕНЫ */
+.player-zone.blue .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.player-zone.red .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+
+/* RESPONSIVE / MOBILE */
+@media (max-width:900px){
+  .hud{ top:4%; width:94% }
+  .progress-wrap{ width:60% }
+}
+@media (max-width:720px){
+  .game-root{ flex-direction:column; overflow:auto }
+  .hud{ position:fixed; top:8px; left:50%; transform:translateX(-50%); width:94%; z-index:90; pointer-events:none }
+  .player-zone{ padding:16px 12px; min-height:46vh }
+  .panel{ padding:12px }
+  .progress-wrap{ width:78%; height:26px; } /* Адаптация HUD */
+  .vs-badge{ padding: 4px 8px; font-size: 0.8rem; }
+  .numpad{ gap: 6px; }
+  .numpad button{ padding:8px 0; font-size:1.1rem }
+  .problem{ font-size:1.8rem }
+  .timer{ min-width:80px; font-size:0.9rem }
+  .answer{ font-size:1.2rem; min-width:120px }
+}
+
+/* small niceties */
+.muted{ color:var(--muted); font-size:0.9rem }
