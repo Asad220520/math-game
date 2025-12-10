@@ -272,24 +272,111 @@ body{
 .player-zone.blue .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 .player-zone.red .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 
-/* RESPONSIVE / MOBILE */
-@media (max-width:900px){
+/* RESPONSIVE / MOBILE OPTIMIZATION */
+
+/* На широких экранах (Десктоп) */
+@media (min-width: 901px) {
+  .player-zone.red .numpad {
+    /* Скрываем нампад соперника на десктопе, если он не нужен для ввода */
+    display: grid !important; /* переопределяем 'none' из мобильного блока, если он был */
+    pointer-events: none; /* Блокируем ввод для соперника */
+    opacity: 0.2; /* Делаем его менее заметным */
+  }
+}
+
+/* Планшеты и большие телефоны (горизонтальная ориентация) */
+@media (max-width: 900px){
   .hud{ top:4%; width:94% }
   .progress-wrap{ width:60% }
 }
-@media (max-width:720px){
-  .game-root{ flex-direction:column; overflow:auto }
-  .hud{ position:fixed; top:8px; left:50%; transform:translateX(-50%); width:94%; z-index:90; pointer-events:none }
-  .player-zone{ padding:16px 12px; min-height:46vh }
-  .panel{ padding:12px }
+
+/* Телефоны (вертикальная ориентация) */
+@media (max-width: 720px){
+  .game-root{ 
+    flex-direction:column; 
+    overflow:auto;
+  }
+  .hud{ 
+    position:fixed; 
+    top:8px; 
+    left:50%; 
+    transform:translateX(-50%); 
+    width:94%; 
+    z-index:90; 
+    pointer-events:none 
+  }
+  
+  /* Зоны игроков, чтобы поместились по вертикали */
+  .player-zone{ 
+    padding:10px 12px; /* Уменьшаем вертикальный паддинг */
+    min-height:30vh; /* Минимальная высота зоны соперника */
+  }
+  .panel{ 
+    padding:12px;
+    max-width: 480px;
+    margin-top: 50px; /* Учитываем фиксированный HUD */
+  }
+  
+  /* Соперник (верхняя зона) - делаем меньше */
+  .player-zone.red .panel, 
+  .player-zone.blue .panel {
+    /* Сжимаем обе панели, чтобы уместить две в экран */
+    max-width: 90vw;
+  }
+
+  /* Прогресс и таймер */
   .progress-wrap{ width:78%; height:26px; } 
   .vs-badge{ padding: 4px 8px; font-size: 0.8rem; }
-  .numpad{ gap: 6px; }
-  .numpad button{ padding:8px 0; font-size:1.1rem }
-  .problem{ font-size:1.8rem }
   .timer{ min-width:80px; font-size:0.9rem }
-  .answer{ font-size:1.2rem; min-width:120px }
+  .timer.time-low{ animation: pulse 700ms ease-in-out infinite; }
+
+  /* Проблема и ответ */
+  .problem{ font-size:1.8rem; margin:8px 0; }
+  .answer{ font-size:1.2rem; min-width:120px; padding:8px 14px; }
+  
+  /* Скрываем нампад соперника */
+  .player-zone.red .numpad,
+  .player-zone.blue .numpad {
+      /* Клавиатура отображается только для активного игрока (см. script.js) */
+  }
+  
+  /* Уменьшаем нампад */
+  .numpad{ 
+    gap: 6px;
+    /* Ограничиваем максимальную ширину нампада для более компактного вида на маленьких экранах */
+    max-width: 280px; 
+    margin: 8px auto 0;
+  }
+  .numpad button{ 
+    padding:8px 0; 
+    font-size:1.1rem;
+    height: 48px; /* Фиксированная высота для лучшего вида */
+  }
 }
+
+/* Ультра-маленькие экраны (iPhone 5/SE, старые Android) */
+@media (max-width: 500px) {
+  .player-zone{ 
+    min-height:28vh;
+    padding: 8px 10px; 
+  }
+  .problem{ 
+    font-size:1.6rem; 
+  }
+  .answer{ 
+    font-size:1.1rem; 
+    min-width:100px;
+  }
+  .numpad{
+    max-width: 240px;
+    gap: 5px;
+  }
+  .numpad button{
+    height: 44px;
+    font-size: 1rem;
+  }
+}
+
 
 /* small niceties */
 .muted{ color:var(--muted); font-size:0.9rem }
