@@ -1,26 +1,45 @@
-// === ГЛОБАЛЬНЫЕ НАСТРОЙКИ И СОСТОЯНИЕ ===
-let score = 50;
-let gameActive = false;
-let maxNumber = 20;
-const TIME_LIMIT = 10;
-let timeLeft = TIME_LIMIT;
+// 📂 script.js
 
-// Храним правильные ответы
-let answerBlue = 0;
-let answerRed = 0;
+// =================================================================
+// 1. ИМПОРТЫ FIREBASE (Импорт из firebase-init.js)
+// =================================================================
+import {
+  db,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  onSnapshot,
+} from "./firebase-init.js";
 
-// Храним ввод игроков
-let inputBlue = "";
-let inputRed = "";
+const gamesCollection = collection(db, "games");
 
-// Счетчики очков (правильных ответов)
-let pointsBlue = 0;
-let pointsRed = 0;
+// =================================================================
+// 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И СОСТОЯНИЕ
+// =================================================================
 
-// Таймер
+let currentGameId = null;
+let myTeam = null; // 'blue' или 'red'
+let localInput = "";
+let gameListener = null;
+
+const TIME_LIMIT = 15;
 let timerInterval;
 
-// Ссылки на аудио (оставляем массив для нескольких звуков)
+// Элементы DOM
+const elements = {
+  lobbyOverlay: document.getElementById("lobby-overlay"),
+  gameCodeInput: document.getElementById("game-code-input"),
+  lobbyStatus: document.getElementById("lobby-status"),
+  modalOverlay: document.getElementById("modal-overlay"),
+  timerDisplay: document.getElementById("timer-display"),
+  progressFill: document.getElementById("progress-fill"),
+  winnerTitle: document.getElementById("winner-title"),
+  gameRoot: document.getElementById("game-root"),
+};
+
+// Аудио (убедитесь, что MP3 файлы существуют)
 const correctSounds = [
   document.getElementById("sound-correct-1"),
   document.getElementById("sound-correct-2"),
@@ -32,13 +51,10 @@ const errorSounds = [
   document.getElementById("sound-error-3"),
 ];
 
-// === ФУНКЦИИ ЗВУКА ===
 function playSound(isCorrect) {
   let soundList = isCorrect ? correctSounds : errorSounds;
-
   const randomIndex = Math.floor(Math.random() * soundList.length);
   const sound = soundList[randomIndex];
-
   if (sound) {
     sound.pause();
     sound.currentTime = 0;
@@ -46,269 +62,442 @@ function playSound(isCorrect) {
   }
 }
 
-// === УСТАНОВКА СЛОЖНОСТИ ===
-window.onload = function () {
-  correctSounds.forEach((s) => s && s.load());
-  errorSounds.forEach((s) => s && s.load());
-  document.getElementById("settings-overlay").style.display = "flex";
-};
+// =================================================================
+// 3. ЛОББИ И УПРАВЛЕНИЕ ИГРОЙ
+// =================================================================
 
-function setDifficulty(number) {
-  maxNumber = number;
-  document.getElementById("settings-overlay").style.display = "none";
-  startNewGame();
+function generateGameCode() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// === УПРАВЛЕНИЕ ТАЙМЕРОМ ===
-function startTimer() {
-  clearInterval(timerInterval);
-  timeLeft = TIME_LIMIT;
+async function createGame() {
+  const code = generateGameCode();
+  currentGameId = code;
+  myTeam = "blue";
 
-  const timerDisplay = document.getElementById("timer-display");
-  timerDisplay.innerText = `Время: ${timeLeft}`;
-  timerDisplay.classList.remove("time-low");
+  elements.lobbyStatus.innerText = `Создание игры: ${code}...`;
 
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    timerDisplay.innerText = `Время: ${timeLeft}`;
+  const initialState = {
+    code: code,
+    status: "waiting",
+    score: 50,
+    maxNumber: 50,
+    playerBlue: { id: "P1", points: 0, input: "" },
+    playerRed: { id: null, points: 0, input: "" },
+    problemBlue: generateMathProblem(50),
+    problemRed: generateMathProblem(50),
+    lastAction: Date.now(),
+    lastUpdater: "server",
+  };
 
-    // Красный эффект при малом времени
-    if (timeLeft <= 3) {
-      timerDisplay.classList.add("time-low");
+  try {
+    await setDoc(doc(gamesCollection, code), initialState);
+    elements.lobbyStatus.innerText = `Игра создана. Код: ${code}. Ожидаем соперника...`;
+
+    listenToGame(code);
+  } catch (error) {
+    console.error("Ошибка при создании игры: ", error);
+    elements.lobbyStatus.innerText = `Ошибка при создании игры. Попробуйте еще раз.`;
+  }
+}
+
+async function joinGame() {
+  const code = elements.gameCodeInput.value.trim();
+  if (code.length !== 4 || isNaN(code)) {
+    elements.lobbyStatus.innerText = "Код должен состоять из 4 цифр.";
+    return;
+  }
+
+  const gameRef = doc(gamesCollection, code);
+  const gameDoc = await getDoc(gameRef);
+
+  if (!gameDoc.exists || gameDoc.data().status !== "waiting") {
+    elements.lobbyStatus.innerText =
+      "Игра с таким кодом не найдена или уже началась.";
+    return;
+  }
+
+  currentGameId = code;
+  myTeam = "red";
+
+  elements.lobbyStatus.innerText = `Присоединяемся к игре ${code}...`;
+
+  try {
+    await updateDoc(gameRef, {
+      "playerRed.id": "P2",
+      status: "playing",
+    });
+
+    listenToGame(code);
+  } catch (error) {
+    console.error("Ошибка при присоединении: ", error);
+    elements.lobbyStatus.innerText = "Ошибка при присоединении к игре.";
+  }
+}
+
+function listenToGame(code) {
+  if (gameListener) {
+    gameListener();
+  }
+
+  const gameRef = doc(gamesCollection, code);
+
+  gameListener = onSnapshot(
+    gameRef,
+    (doc) => {
+      if (doc.exists) {
+        const gameState = doc.data();
+        updateGameUI(gameState);
+      } else {
+        alert("Игра завершена или удалена!");
+        resetToLobby();
+      }
+    },
+    (error) => {
+      console.error("Ошибка при получении данных Firestore: ", error);
+    }
+  );
+}
+
+function updateGameUI(gameState) {
+  if (gameState.status === "waiting") {
+    elements.lobbyOverlay.classList.add("show");
+    elements.gameRoot.style.display = "none";
+    elements.lobbyStatus.innerText = `Игра создана. Код: ${gameState.code}. Ожидаем соперника...`;
+    return;
+  }
+
+  if (gameState.status === "playing") {
+    elements.lobbyOverlay.classList.remove("show");
+    elements.gameRoot.style.display = "flex";
+
+    if (!timerInterval) {
+      startTimer(gameState.lastAction);
     }
 
-    if (timeLeft <= 0) {
+    const blueProblem = gameState.problemBlue.expression;
+    const redProblem = gameState.problemRed.expression;
+
+    document.getElementById("problem-blue").innerText = blueProblem;
+    document.getElementById("problem-red").innerText = redProblem;
+
+    document.getElementById(
+      "score-blue"
+    ).innerText = `Очки: ${gameState.playerBlue.points}`;
+    document.getElementById(
+      "score-red"
+    ).innerText = `Очки: ${gameState.playerRed.points}`;
+
+    updateProgressBar(gameState.score);
+
+    const opponentTeam = myTeam === "blue" ? "red" : "blue";
+    const opponentPlayerData =
+      opponentTeam === "red" ? gameState.playerRed : gameState.playerBlue;
+
+    // Настройка порядка зон и заголовков
+    if (myTeam === "red") {
+      document.getElementById("team-name-blue").innerText = `СОПЕРНИК (СИНИЕ)`;
+      document.getElementById("team-name-red").innerText = `ВЫ (КРАСНЫЕ)`;
+
+      document.querySelector(".player-zone.blue").style.order = 1;
+      document.querySelector(".player-zone.red").style.order = 0;
+
+      document.getElementById("numpad-blue").style.pointerEvents = "none";
+      document.getElementById("numpad-red").style.pointerEvents = "auto";
+    } else {
+      document.getElementById("team-name-blue").innerText = `ВЫ (СИНИЕ)`;
+      document.getElementById("team-name-red").innerText = `СОПЕРНИК (КРАСНЫЕ)`;
+
+      document.querySelector(".player-zone.blue").style.order = 0;
+      document.querySelector(".player-zone.red").style.order = 1;
+
+      document.getElementById("numpad-blue").style.pointerEvents = "auto";
+      document.getElementById("numpad-red").style.pointerEvents = "none";
+    }
+
+    // Обновляем ввод
+    document.getElementById(`answer-${myTeam}`).innerText =
+      localInput === "" ? "..." : localInput;
+    document.getElementById(`answer-${opponentTeam}`).innerText =
+      opponentPlayerData.input === "" ? "..." : opponentPlayerData.input;
+
+    // 5. Проверка на победу
+    if (gameState.score >= 100) {
+      endGame("СИНЯЯ КОМАНДА ПОБЕДИЛА!", "var(--blue)");
+    } else if (gameState.score <= 0) {
+      endGame("КРАСНАЯ КОМАНДА ПОБЕДИЛА!", "var(--red)");
+    }
+  }
+}
+
+// =================================================================
+// 4. ЛОГИКА ТАЙМЕРА И СЧЕТА
+// =================================================================
+
+function startTimer(lastActionTime) {
+  clearInterval(timerInterval);
+  const now = Date.now();
+  const elapsedTime = Math.floor((now - lastActionTime) / 1000);
+
+  let timeLeft = TIME_LIMIT - elapsedTime;
+
+  const timerDisplay = elements.timerDisplay;
+
+  timerInterval = setInterval(async () => {
+    timeLeft--;
+
+    if (timeLeft < 0) {
       clearInterval(timerInterval);
       handleTimeOut();
+      return;
+    }
+
+    timerDisplay.innerText = `Время: ${timeLeft}`;
+
+    if (timeLeft <= 5) {
+      timerDisplay.classList.add("time-low");
+    } else {
+      timerDisplay.classList.remove("time-low");
     }
   }, 1000);
 }
 
-function stopTimer() {
-  clearInterval(timerInterval);
+async function handleTimeOut() {
+  if (!currentGameId || !myTeam) return;
+
+  const gameRef = doc(gamesCollection, currentGameId);
+
+  try {
+    const gameDoc = await getDoc(gameRef);
+    if (!gameDoc.exists) return;
+    const gameState = gameDoc.data();
+
+    const now = Date.now();
+    const elapsedTime = Math.floor((now - gameState.lastAction) / 1000);
+
+    if (elapsedTime >= TIME_LIMIT) {
+      const max = gameState.maxNumber;
+
+      await updateDoc(gameRef, {
+        score: gameState.score - 5,
+        problemBlue: generateMathProblem(max),
+        problemRed: generateMathProblem(max),
+        lastAction: now,
+        lastUpdater: "timeout",
+      });
+    }
+  } catch (e) {
+    console.error("Ошибка таймаута:", e);
+  } finally {
+    startTimer(Date.now());
+  }
 }
 
-function handleTimeOut() {
-  // При таймауте обе команды теряют
-  score -= 5;
-  updateProgressBar();
+function updateProgressBar(currentScore) {
+  const fill = elements.progressFill;
 
-  generateProblem("blue");
-  generateProblem("red");
+  let fillWidth = (currentScore / 100) * 100;
+  let redPercent = 100 - fillWidth;
+  let bluePercent = fillWidth;
 
-  startTimer();
+  fill.style.background = `linear-gradient(90deg, var(--blue) 0%, var(--blue) ${bluePercent}%, var(--red) ${bluePercent}%, var(--red) 100%)`;
+  fill.style.width = fillWidth + "%";
 }
 
-// === ИГРОВЫЕ ФУНКЦИИ ===
-function startNewGame() {
-  score = 50;
-  gameActive = true;
-  pointsBlue = 0;
-  pointsRed = 0;
+// =================================================================
+// 5. ЛОГИКА ВВОДА ИГРОКА И СИНХРОНИЗАЦИЯ
+// =================================================================
 
-  document.getElementById("modal-overlay").style.display = "none";
+function addNumber(team, number) {
+  if (team !== myTeam || !currentGameId) return;
 
-  updateProgressBar();
-  updateScores();
-
-  generateProblem("blue");
-  generateProblem("red");
-
-  updateDisplay("blue");
-  updateDisplay("red");
-
-  startTimer();
+  if (localInput.length < 3) {
+    localInput += number;
+    document.getElementById(`answer-${myTeam}`).innerText = localInput;
+    updateOpponentInput();
+  }
 }
 
-// Генерация случайного примера (Использует maxNumber)
-function generateProblem(team) {
-  if (!gameActive) return;
+function clearInput(team) {
+  if (team !== myTeam || !currentGameId) return;
 
-  const num1 = Math.floor(Math.random() * maxNumber) + 1;
-  const num2 = Math.floor(Math.random() * maxNumber) + 1;
+  localInput = "";
+  document.getElementById(`answer-${myTeam}`).innerText = "...";
+  updateOpponentInput();
+}
+
+async function updateOpponentInput() {
+  if (!currentGameId || !myTeam) return;
+
+  const gameRef = doc(gamesCollection, currentGameId);
+
+  const updateData = {};
+  if (myTeam === "blue") {
+    updateData["playerBlue.input"] = localInput;
+  } else {
+    updateData["playerRed.input"] = localInput;
+  }
+
+  try {
+    await updateDoc(gameRef, updateData);
+  } catch (e) {
+    console.error("Ошибка обновления ввода:", e);
+  }
+}
+
+async function submitAnswer(team) {
+  if (team !== myTeam || !currentGameId) return;
+  if (localInput === "") return;
+
+  const playerAnswer = parseInt(localInput);
+  const gameRef = doc(gamesCollection, currentGameId);
+
+  const btn = document.querySelector(`#numpad-${myTeam} .btn-enter`);
+  btn.disabled = true;
+
+  try {
+    const gameDoc = await getDoc(gameRef);
+    if (!gameDoc.exists || gameState.status !== "playing") return;
+    const gameState = gameDoc.data();
+    const max = gameState.maxNumber;
+
+    let isCorrect = false;
+    let newScore = gameState.score;
+    let newProblem;
+    let newPoints =
+      myTeam === "blue"
+        ? gameState.playerBlue.points
+        : gameState.playerRed.points;
+
+    const currentProblemState =
+      myTeam === "blue" ? gameState.problemBlue : gameState.problemRed;
+
+    if (playerAnswer === currentProblemState.answer) {
+      isCorrect = true;
+      playSound(true);
+      newPoints++;
+
+      if (myTeam === "blue") {
+        newScore += 10;
+      } else {
+        newScore -= 10;
+      }
+
+      newProblem = generateMathProblem(max);
+    } else {
+      playSound(false);
+      newScore -= 5;
+      newProblem = currentProblemState;
+    }
+
+    const updateData = {
+      score: newScore,
+      lastAction: Date.now(),
+      lastUpdater: myTeam,
+    };
+
+    if (myTeam === "blue") {
+      updateData["playerBlue.points"] = newPoints;
+      updateData["problemBlue"] = newProblem;
+      updateData["playerBlue.input"] = "";
+    } else {
+      updateData["playerRed.points"] = newPoints;
+      updateData["problemRed"] = newProblem;
+      updateData["playerRed.input"] = "";
+    }
+
+    showFeedback(myTeam, isCorrect);
+
+    localInput = "";
+    await updateDoc(gameRef, updateData);
+
+    startTimer(Date.now());
+  } catch (error) {
+    console.error("Ошибка при отправке ответа: ", error);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// =================================================================
+// 6. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ЭКСПОРТ
+// =================================================================
+
+function generateMathProblem(max) {
+  const num1 = Math.floor(Math.random() * max) + 1;
+  const num2 = Math.floor(Math.random() * max) + 1;
   const isPlus = Math.random() > 0.5;
 
-  let problemText = "";
-  let correct = 0;
+  let expression = "";
+  let answer = 0;
 
   if (isPlus) {
-    problemText = `${num1} + ${num2}`;
-    correct = num1 + num2;
+    expression = `${num1} + ${num2}`;
+    answer = num1 + num2;
   } else {
-    const max = Math.max(num1, num2);
-    const min = Math.min(num1, num2);
-    problemText = `${max} - ${min}`;
-    correct = max - min;
+    const maxVal = Math.max(num1, num2);
+    const minVal = Math.min(num1, num2);
+    expression = `${maxVal} - ${minVal}`;
+    answer = maxVal - minVal;
   }
 
-  if (team === "blue") {
-    document.getElementById("problem-blue").innerText = problemText;
-    answerBlue = correct;
-    inputBlue = "";
-    updateDisplay("blue");
-  } else {
-    document.getElementById("problem-red").innerText = problemText;
-    answerRed = correct;
-    inputRed = "";
-    updateDisplay("red");
-  }
+  return { expression, answer };
 }
 
-// Добавление цифры
-function addNumber(team, number) {
-  if (!gameActive) return;
-
-  if (team === "blue") {
-    if (inputBlue.length < 3) {
-      inputBlue += number;
-      updateDisplay("blue");
-    }
-  } else {
-    if (inputRed.length < 3) {
-      inputRed += number;
-      updateDisplay("red");
-    }
-  }
-}
-
-// Кнопка C (Очистить)
-function clearInput(team) {
-  if (!gameActive) return;
-
-  if (team === "blue") {
-    inputBlue = "";
-    updateDisplay("blue");
-  } else {
-    inputRed = "";
-    updateDisplay("red");
-  }
-}
-
-// Обновление экрана ответа
-function updateDisplay(team) {
-  let text = team === "blue" ? inputBlue : inputRed;
-  let displayElement = document.getElementById(`answer-${team}`);
-
-  displayElement.innerText = text === "" ? "..." : text;
-  // Возвращаем стандартный фон (прозрачный)
-  displayElement.style.backgroundColor = "transparent";
-  displayElement.style.borderColor = "rgba(255,255,255,0.02)";
-}
-
-// Обновление счетчиков очков
-function updateScores() {
-  document.getElementById("score-blue").innerText = `Очки: ${pointsBlue}`;
-  document.getElementById("score-red").innerText = `Очки: ${pointsRed}`;
-}
-
-// Кнопка OK (Проверка ответа)
-function checkAnswer(team) {
-  if (!gameActive) return;
-
-  let playerInputStr = team === "blue" ? inputBlue : inputRed;
-
-  if (playerInputStr === "") return;
-
-  let playerAnswer = parseInt(playerInputStr);
-  let correctAnswer = team === "blue" ? answerBlue : answerRed;
-
-  if (playerAnswer === correctAnswer) {
-    // ПРАВИЛЬНО
-    showFeedback(team, true);
-    playSound(true);
-
-    if (team === "blue") {
-      score += 10;
-      pointsBlue++;
-    } else {
-      score -= 10;
-      pointsRed++;
-    }
-
-    updateProgressBar();
-    updateScores();
-    generateProblem(team);
-
-    startTimer();
-  } else {
-    // НЕПРАВИЛЬНО
-    showFeedback(team, false);
-    playSound(false);
-    clearInput(team);
-
-    // Штраф
-    score -= 5;
-    updateProgressBar();
-
-    generateProblem(team);
-  }
-}
-
-// Анимация индикации ответа (ИСПРАВЛЕНО)
 function showFeedback(team, isCorrect) {
   const display = document.getElementById(`answer-${team}`);
 
   if (isCorrect) {
-    // ЗЕЛЕНАЯ ИНДИКАЦИЯ (меняем только рамку и добавляем свечение)
     display.style.borderColor = "rgba(100, 255, 100, 0.5)";
     display.style.filter = "drop-shadow(0 0 5px rgba(0, 255, 0, 0.8))";
   } else {
-    // КРАСНАЯ ИНДИКАЦИЯ
     display.style.borderColor = "rgba(255, 100, 100, 0.5)";
     display.style.filter = "drop-shadow(0 0 5px rgba(255, 0, 0, 0.8))";
   }
 
-  // Сброс через 500ms
   setTimeout(() => {
-    display.style.borderColor = "rgba(255,255,255,0.02)"; // Стандартная рамка
-    display.style.filter = "none"; // Убираем свечение
+    display.style.borderColor = "rgba(255,255,255,0.1)";
+    display.style.filter = "none";
   }, 500);
 }
 
-// Двигаем полоску и проверяем победу
-function updateProgressBar() {
-  const fill = document.getElementById("progress-fill");
-
-  if (score < 0) score = 0;
-  if (score > 100) score = 100;
-
-  // Окрашивание полосы в красный/синий
-  let fillWidth = (score / 100) * 100; // Прогресс в процентах
-  let redPercent = 100 - fillWidth;
-  let bluePercent = fillWidth;
-
-  // Создаем градиент для правильного отображения цветов в Progress-fill
-  fill.style.background = `linear-gradient(90deg, var(--blue) 0%, var(--blue) ${bluePercent}%, var(--red) ${bluePercent}%, var(--red) 100%)`;
-
-  // Для анимации используем ширину
-  fill.style.width = fillWidth + "%";
-
-  checkWin();
-}
-
-// Проверяем победителя
-function checkWin() {
-  if (score >= 100) {
-    endGame("СИНЯЯ КОМАНДА ПОБЕДИЛА!", "var(--blue)");
-  } else if (score <= 0) {
-    endGame("КРАСНАЯ КОМАНДА ПОБЕДИЛА!", "var(--red)");
-  }
-}
-
-// Завершение игры
 function endGame(message, color) {
-  gameActive = false;
-  stopTimer();
-  const modal = document.getElementById("modal-overlay");
-  const title = document.getElementById("winner-title");
+  clearInterval(timerInterval);
+  timerInterval = null;
 
-  title.innerText = message;
-  title.style.color = color;
-  modal.style.display = "flex";
+  elements.winnerTitle.innerText = message;
+  elements.winnerTitle.style.color = color;
+  elements.modalOverlay.classList.add("show");
 }
 
-// Перезапуск игры
-function restartGame() {
-  document.getElementById("modal-overlay").style.display = "none";
-  document.getElementById("settings-overlay").style.display = "flex";
+function resetToLobby() {
+  if (gameListener) {
+    gameListener();
+  }
+
+  currentGameId = null;
+  myTeam = null;
+  localInput = "";
+  clearInterval(timerInterval);
+  timerInterval = null;
+
+  elements.modalOverlay.classList.remove("show");
+  elements.gameRoot.style.display = "none";
+  elements.lobbyOverlay.classList.add("show");
+  elements.gameCodeInput.value = "";
+  elements.lobbyStatus.innerText = "Ожидание...";
+
+  document.querySelector(".player-zone.blue").style.order = 0;
+  document.querySelector(".player-zone.red").style.order = 1;
+  document.getElementById("team-name-blue").innerText = `ВЫ (СИНИЕ)`;
 }
+
+// Делаем функции доступными для HTML через глобальный объект window.game
+window.game = {
+  createGame,
+  joinGame,
+  addNumber,
+  clearInput,
+  submitAnswer,
+  resetToLobby,
+};

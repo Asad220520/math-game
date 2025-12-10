@@ -1,21 +1,23 @@
 :root{
   /* ЯРКИЕ, ЧИСТЫЕ ЦВЕТА */
-  --bg: #1a1a2e; /* Более светлый, аккуратный темный фон */
-  --card: #20203a; /* Фон для панелей */
-  --glass: rgba(255,255,255,0.08); /* Чуть более заметный фон для кнопок */
+  --bg: #1a1a2e; 
+  --card: #20203a; 
+  --glass: rgba(255,255,255,0.08); 
   --muted: #b0b0c6;
   
-  --blue: #4c7cff; /* Яркий, чистый синий */
-  --blue-deep: #2a5cff; /* Насыщенный синий для градиентов */
-  --red: #ff4c4c; /* Яркий, чистый красный */
-  --red-deep: #cc3c3c; /* Насыщенный красный для градиентов */
+  --blue: #4c7cff; 
+  --blue-deep: #2a5cff; 
+  --red: #ff4c4c; 
+  --red-deep: #cc3c3c; 
   
-  /* УДАЛЕНЫ НЕОНОВЫЕ ТЕНИ И ГЛУБОКИЙ ГРАДИЕНТ */
+  --blue-deep-rgb: 42, 92, 255; /* Для rgba() */
+  --red-deep-rgb: 204, 60, 60; /* Для rgba() */
+  
   --neon-glow: none; 
   --glass-border: rgba(255,255,255,0.1); 
   --glass-strong: rgba(255,255,255,0.12);
   --accent: rgba(76, 124, 255, 0.2);
-  --radius: 12px; /* Чуть меньше радиус */
+  --radius: 12px;
   font-family: "Segoe UI", Roboto, Inter, system-ui, -apple-system, "Helvetica Neue", Arial;
 }
 
@@ -24,7 +26,6 @@
 html,body{height:100%}
 body{
   margin:0;
-  /* УПРОЩЕННЫЙ ФОН */
   background: var(--bg);
   color:#e6eef8;
   -webkit-font-smoothing:antialiased;
@@ -47,7 +48,6 @@ body{
 .modal-card{
   width:100%;
   max-width:420px;
-  /* ЧИСТЫЙ ФОН МОДАЛЬНОГО ОКНА */
   background: var(--card);
   border-radius:16px;
   padding:22px;
@@ -58,6 +58,21 @@ body{
 .modal-card h1{margin:0 0 6px;font-size:1.6rem}
 .modal-card .muted{color:var(--muted); margin:6px 0 14px}
 .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:14px}
+
+/* СТИЛИ ДЛЯ ПОЛЯ ВВОДА В ЛОББИ */
+.modal-card input[type="text"] {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    color: #fff;
+    width: 100%;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.2rem;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+    outline: none;
+}
 
 /* Buttons */
 .btn{
@@ -106,7 +121,7 @@ body{
   position:relative;
   width:70%;
   max-width:720px;
-  height:30px; /* Немного уменьшенная высота */
+  height:30px; 
   border-radius:999px;
   background:var(--card);
   border:1px solid var(--glass-border);
@@ -118,7 +133,6 @@ body{
   width:50%;
   height:100%;
   border-radius:999px;
-  /* УДАЛЕНЫ ТЕНИ, ОСТАВЛЕНЫ ЧИСТЫЕ ГРАДИЕНТЫ ДЛЯ СИНИЙ/КРАСНЫЙ */
   background: linear-gradient(90deg, var(--blue), var(--red));
   box-shadow: none;
   transition:width 420ms cubic-bezier(.2,.9,.25,1.15);
@@ -128,7 +142,6 @@ body{
   content:"";
   position:absolute;
   inset:0;
-  /* Упрощенный блик */
   background:linear-gradient(90deg, rgba(255,255,255,0.05), transparent 30%, rgba(255,255,255,0.05));
   mix-blend-mode:overlay;
 }
@@ -139,7 +152,7 @@ body{
   transform:translate(-50%,-50%);
   background:var(--bg);
   color: #fff;
-  padding:6px 10px; /* Уменьшен padding */
+  padding:6px 10px; 
   border-radius:999px;
   border:1px solid var(--glass-border);
   font-weight:700;
@@ -150,7 +163,7 @@ body{
 
 /* timer */
 .timer{
-  min-width:100px; /* Уменьшен размер */
+  min-width:100px; 
   padding:6px 10px;
   border-radius:8px;
   background:var(--card);
@@ -185,23 +198,15 @@ body{
 .panel{
   width:100%;
   max-width:420px;
-  /* ЧИСТЫЙ ФОН ПАНЕЛЕЙ */
   background: var(--card);
   border-radius:14px;
   padding:16px;
   text-align:center;
   border:1px solid var(--glass-border);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Уменьшенная тень */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
 }
-/* ЧИСТЫЙ ФОН ЗОН */
-.player-zone.blue{ background: linear-gradient(180deg, rgba(var(--blue-deep-rgb),0.05), rgba(var(--blue-deep-rgb),0.01)); }
-.player-zone.red{ background: linear-gradient(180deg, rgba(var(--red-deep-rgb),0.05), rgba(var(--red-deep-rgb),0.01)); }
-/* Переменные для RGB, чтобы использовать прозрачность. Добавим их в :root для ясности. */
-:root {
-    /* ... (остальные переменные) */
-    --blue-deep-rgb: 42, 92, 255; /* RGB для #2a5cff */
-    --red-deep-rgb: 204, 60, 60; /* RGB для #cc3c3c */
-}
+.player-zone.blue{ background: linear-gradient(180deg, rgba(42, 92, 255, 0.05), rgba(42, 92, 255, 0.01)); }
+.player-zone.red{ background: linear-gradient(180deg, rgba(204, 60, 60, 0.05), rgba(204, 60, 60, 0.01)); }
 
 
 /* Team header */
@@ -210,7 +215,7 @@ body{
 
 /* Problem and answer */
 .problem{
-  font-size:2.2rem; /* Немного меньше */
+  font-size:2.2rem; 
   font-weight:800;
   letter-spacing:0;
   margin:10px 0;
@@ -225,14 +230,14 @@ body{
   font-size:1.5rem;
   background: var(--glass);
   border:1px solid var(--glass-border);
-  transition: border-color 0.1s, filter 0.1s; /* для JS анимации */
+  transition: border-color 0.1s, filter 0.1s; 
 }
 
 /* NUMPAD */
 .numpad{
   display:grid;
   grid-template-columns:repeat(3, 1fr);
-  gap:8px; /* Уменьшен зазор */
+  gap:8px; 
   margin-top:6px;
   align-items:stretch;
 }
@@ -263,7 +268,7 @@ body{
     font-weight:800 
 }
 
-/* Team accent glow - УДАЛЕНЫ */
+/* Team accent glow */
 .player-zone.blue .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 .player-zone.red .panel{ box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 
@@ -277,7 +282,7 @@ body{
   .hud{ position:fixed; top:8px; left:50%; transform:translateX(-50%); width:94%; z-index:90; pointer-events:none }
   .player-zone{ padding:16px 12px; min-height:46vh }
   .panel{ padding:12px }
-  .progress-wrap{ width:78%; height:26px; } /* Адаптация HUD */
+  .progress-wrap{ width:78%; height:26px; } 
   .vs-badge{ padding: 4px 8px; font-size: 0.8rem; }
   .numpad{ gap: 6px; }
   .numpad button{ padding:8px 0; font-size:1.1rem }
